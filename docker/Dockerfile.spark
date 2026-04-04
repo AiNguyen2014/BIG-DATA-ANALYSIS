@@ -1,0 +1,27 @@
+FROM hadoop-base:latest
+
+ARG USER_NAME=hadoop
+ARG SPARK_VERSION=4.0.2
+
+COPY packages/spark-${SPARK_VERSION}-bin-hadoop3.tgz /tmp/spark.tgz
+
+RUN tar -xzf /tmp/spark.tgz -C /opt && \
+    mv /opt/spark-${SPARK_VERSION}-bin-hadoop3 /opt/spark && \
+    rm /tmp/spark.tgz
+
+# GCS connector cho Spark
+COPY packages/gcs-connector-hadoop3-latest.jar /opt/spark/jars/
+
+ENV SPARK_HOME=/opt/spark
+ENV PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
+
+RUN echo "export SPARK_HOME=/opt/spark" >> /home/${USER_NAME}/.bashrc && \
+    echo "export PATH=\$PATH:\$SPARK_HOME/bin:\$SPARK_HOME/sbin" >> /home/${USER_NAME}/.bashrc
+
+COPY config/spark/ /opt/spark/conf/
+
+RUN chown -R ${USER_NAME}:${USER_NAME} /opt/spark
+
+EXPOSE 7077 8080
+
+CMD ["/bin/bash"]

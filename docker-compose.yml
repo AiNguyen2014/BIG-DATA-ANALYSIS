@@ -1,0 +1,77 @@
+services:
+
+  nthuymaster:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.hadoop
+      args:
+        USER_NAME: ${USER_NAME}
+        HADOOP_VERSION: ${HADOOP_VERSION}
+
+    container_name: ${HADOOP_MASTER_NAME}
+    hostname: hadoop-master
+
+    environment:
+      USER_NAME: ${USER_NAME}
+      NODE_TYPE: master
+      START_DATANODE_ON_MASTER: ${START_DATANODE_ON_MASTER}
+      GOOGLE_APPLICATION_CREDENTIALS: /opt/keys/key.json
+
+    ports:
+      - "9870:9870"
+      - "8088:8088"
+      - "9000:9000"
+
+    volumes:
+      - ./config/hadoop:/opt/hadoop/etc/hadoop
+      - ./config/spark:/opt/spark/conf
+      - ./scripts:/scripts
+      - ./config/gcs/credentials/${GCP_KEY_FILE}:/opt/keys/key.json:ro
+      - namenode-data:/data/hdfs/namenode
+      - sshkeys:/home/${USER_NAME}/.ssh
+
+    networks:
+      - hadoopnet
+
+  nthuyslave1:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.hadoop
+      args:
+        USER_NAME: ${USER_NAME}
+        HADOOP_VERSION: ${HADOOP_VERSION}
+
+    container_name: ${HADOOP_WORKER1_NAME}
+    hostname: hadoop-worker1
+
+    depends_on:
+      - nthuymaster
+
+    environment:
+      USER_NAME: ${USER_NAME}
+      NODE_TYPE: worker
+      GOOGLE_APPLICATION_CREDENTIALS: /opt/keys/key.json
+
+    ports:
+      - "9864:9864"
+      - "8042:8042"
+
+    volumes:
+      - ./config/hadoop:/opt/hadoop/etc/hadoop
+      - ./config/spark:/opt/spark/conf
+      - ./scripts:/scripts
+      - ./config/gcs/credentials/${GCP_KEY_FILE}:/opt/keys/key.json:ro
+      - datanode-data:/data/hdfs/datanode
+      - sshkeys:/home/${USER_NAME}/.ssh
+
+    networks:
+      - hadoopnet
+
+networks:
+  hadoopnet:
+    driver: bridge
+
+volumes:
+  namenode-data:
+  datanode-data:
+  sshkeys:

@@ -1,0 +1,20 @@
+# Ignore Google Cloud credentials
+config/gcs/credentials/*
+*.json
+
+# Python cache
+__pycache__/
+
+# Environment files
+.env
+
+# Logs
+*.log
+
+# Big data packages
+packages/
+
+# Hadoop / Spark archives
+*.tar.gz
+*.tgz
+*.jar
