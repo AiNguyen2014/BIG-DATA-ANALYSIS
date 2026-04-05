@@ -1,10 +1,11 @@
 Cấu trúc thư mục:
+```text
 HADOOP_CLUSTER/
-├── config/                  
-│   ├── gcs/                 
+├── config/
+│   ├── gcs/
 │   │   └── credentials/
 │   │       └── bigdata-spark-project-....json
-│   ├── hadoop/              
+│   ├── hadoop/
 │   │   ├── capacity-scheduler.xml
 │   │   ├── core-site.xml
 │   │   ├── hadoop-env.sh
@@ -13,31 +14,31 @@ HADOOP_CLUSTER/
 │   │   ├── mapred-site.xml
 │   │   ├── workers
 │   │   └── yarn-site.xml
-│   └── spark/               
+│   └── spark/
 │       ├── spark-defaults.conf
 │       └── spark-env.sh
-├── data/                   
-│   ├── datanode/            
-│   └── namenode/            
-├── docker/                 
-│   ├── Dockerfile.hadoop    
-│   └── Dockerfile.spark     
-├── jobs/                    # PySpark / Spark scripts
+├── data/
+│   ├── datanode/
+│   └── namenode/
+├── docker/
+│   ├── Dockerfile.hadoop
+│   └── Dockerfile.spark
+├── jobs/
 │   └── bronze_to_silver_job.py
-├── packages/                
+├── packages/
 │   ├── gcs-connector-hadoop3-latest.jar
 │   ├── hadoop-3.4.3.tar.gz
 │   ├── jdk-21_linux-x64_bin.tar.gz
 │   └── spark-4.0.2-bin-hadoop3.tgz
-├── scripts/                 
-│   ├── entrypoint.sh        
-│   ├── start-master.sh     
-│   └── start-worker.sh      
-├── .env                    
-├── .env.example             
-├── .gitignore              
-├── docker-compose.yml      
-└── README.md                
+├── scripts/
+│   ├── entrypoint.sh
+│   ├── start-master.sh
+│   └── start-worker.sh
+├── .env
+├── .env.example
+├── .gitignore
+├── docker-compose.yml
+└── README.md               
 1. Clone repo
 2. Copy file .env.example thành file .env, đổi tên của mình
 3. Bỏ file key GCP vào config/gcs/credentials/
