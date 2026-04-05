@@ -1,6 +1,6 @@
 services:
 
-  nthuymaster:
+  hadoopmaster:
     build:
       context: .
       dockerfile: docker/Dockerfile.hadoop
@@ -27,13 +27,14 @@ services:
       - ./config/spark:/opt/spark/conf
       - ./scripts:/scripts
       - ./config/gcs/credentials/${GCP_KEY_FILE}:/opt/keys/key.json:ro
+      - ./jobs:/home/${USER_NAME}/jobs
       - namenode-data:/data/hdfs/namenode
       - sshkeys:/home/${USER_NAME}/.ssh
 
     networks:
       - hadoopnet
 
-  nthuyslave1:
+  hadoopslave1:
     build:
       context: .
       dockerfile: docker/Dockerfile.hadoop
@@ -45,7 +46,7 @@ services:
     hostname: hadoop-worker1
 
     depends_on:
-      - nthuymaster
+      - hadoopmaster
 
     environment:
       USER_NAME: ${USER_NAME}
@@ -66,6 +67,58 @@ services:
 
     networks:
       - hadoopnet
+
+  postgres:
+    image: postgres:13
+    container_name: airflow-postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "airflow" ]
+      interval: 5s
+      retries: 5
+    networks:
+      - hadoopnet
+
+  airflow-webserver:
+    image: apache/airflow:2.7.0
+    container_name: airflow-web
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+    volumes:
+      - ./jobs:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8081:8080"
+    networks:
+      - hadoopnet
+    command: webserver
+
+  airflow-scheduler:
+    image: apache/airflow:2.7.0
+    container_name: airflow-scheduler
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-webserver:
+        condition: service_started
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+    volumes:
+      - ./jobs:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - hadoopnet
+    command: scheduler
 
 networks:
   hadoopnet:
