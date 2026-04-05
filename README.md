@@ -38,7 +38,9 @@ HADOOP_CLUSTER/
 ├── .env.example
 ├── .gitignore
 ├── docker-compose.yml
-└── README.md               
+└── README.md
+
+```         
 1. Clone repo
 2. Copy file .env.example thành file .env, đổi tên của mình
 3. Bỏ file key GCP vào config/gcs/credentials/
