@@ -58,6 +58,7 @@ jobs/bronze_to_silver_job.py #thay bằng file pyspark của mình
 File bronze_to_silver_job.py đã thực hiện etl bước đầu, xem để thực hiện tiếp.
 
 Thành viên B có thể load các file này xử lý tiếp:
+```text
 Dữ liệu	            Đường dẫn trên GCS	                     Mục đích
 Supply Chain Bronze	gs://bigdata-spark-bucket/bronze/dataco/	load về xử lý Silver
 Logs Bronze	         gs://bigdata-spark-bucket/bronze/logs/	   load về xử lý Silver
