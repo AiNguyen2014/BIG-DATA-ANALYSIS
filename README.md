@@ -34,6 +34,7 @@ HADOOP_CLUSTER/
 │   ├── entrypoint.sh
 │   ├── start-master.sh
 │   └── start-worker.sh
+├── logs 
 ├── .env
 ├── .env.example
 ├── .gitignore
@@ -44,9 +45,16 @@ HADOOP_CLUSTER/
 1. Clone repo
 2. Copy file .env.example thành file .env, đổi tên của mình
 3. Bỏ file key GCP vào config/gcs/credentials/
-4. Tạo thư mục packages chứa các file nén hadoop, spark, ...
+4. Tạo thư mục packages chứa các file nén hadoop, spark, ...Tạo thêm thư mục rỗng là logs
 5. Chạy:
-   docker compose up -d --build
+   docker-compose build
+- Khởi tạo database Airflow (BẮT BUỘC)
+docker-compose run airflow-webserver airflow db init
+- Tạo user đăng nhập Airflow
+docker-compose run airflow-webserver airflow users create --username admin --password admin --firstname admin --lastname admin --role Admin --email admin@email.com
+- CHẠY toàn bộ hệ thống
+docker-compose up -d
+
 6. Khi chạy spark với delta-lake sử dụng lệnh: spark-submit \
 --master yarn \
 --deploy-mode cluster \
