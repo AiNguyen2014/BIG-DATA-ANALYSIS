@@ -24,7 +24,9 @@ HADOOP_CLUSTER/
 │   ├── Dockerfile.hadoop
 │   └── Dockerfile.spark
 ├── jobs/
-│   └── bronze_to_silver_job.py
+│   |── bronze_to_silver_job.py
+|___|__silver_to_gold_job.py
+|
 ├── packages/
 │   ├── gcs-connector-hadoop3-latest.jar
 │   ├── hadoop-3.4.3.tar.gz
@@ -43,7 +45,7 @@ HADOOP_CLUSTER/
 
 ```         
 1. Clone repo
-2. Copy file .env.example thành file .env, đổi tên của mình
+2. Copy file .env.example thành file .env, đổi USERNAME trong file .env thành tên của mình. VD:hadoopainguyen
 3. Bỏ file key GCP vào config/gcs/credentials/
 4. Tạo thư mục packages chứa các file nén hadoop, spark, ...Tạo thêm thư mục rỗng là logs
 5. Chạy:
@@ -56,17 +58,23 @@ docker-compose run airflow-webserver airflow users create --username admin --pas
 docker-compose up -d
 
 6. Khi chạy spark với delta-lake sử dụng lệnh: 
+Lưu ý: cần vào container để chạy spark bằng lệnh 
 
+docker exec -it hadoop-master bash   (lệnh này sẽ vào root)
+
+Nên đăng nhập bằng user trước khi chạy spark-submit
+
+su - hadoopainguyen
+
+Sau đó mới chạy spark-submit khi cần
 spark-submit \
 --master yarn \
 --deploy-mode cluster \
 jobs/bronze_to_silver_job.py #thay bằng file pyspark của mình
 
-File bronze_to_silver_job.py đã thực hiện etl bước đầu, xem để thực hiện tiếp.
 
 Thành viên B có thể load các file này xử lý tiếp:
 ```text
 Dữ liệu	            Đường dẫn trên GCS	                     Mục đích
 Supply Chain Bronze	gs://bigdata-spark-bucket/bronze/dataco/	load về xử lý Silver
 Logs Bronze	         gs://bigdata-spark-bucket/bronze/logs/	   load về xử lý Silver
-
