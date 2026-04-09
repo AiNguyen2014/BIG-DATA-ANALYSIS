@@ -55,7 +55,8 @@ docker-compose run airflow-webserver airflow users create --username admin --pas
 - CHẠY toàn bộ hệ thống
 docker-compose up -d
 
-6. Khi chạy spark với delta-lake sử dụng lệnh: spark-submit \
+6. Khi chạy spark với delta-lake sử dụng lệnh: 
+spark-submit \
 --master yarn \
 --deploy-mode cluster \
 --packages io.delta:delta-spark_2.13:4.0.0 \

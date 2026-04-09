@@ -11,6 +11,8 @@ services:
     container_name: ${HADOOP_MASTER_NAME}
     hostname: hadoop-master
 
+    entrypoint: /scripts/entrypoint.sh
+
     environment:
       USER_NAME: ${USER_NAME}
       NODE_TYPE: master
@@ -30,7 +32,7 @@ services:
       - ./jobs:/home/${USER_NAME}/jobs
       - namenode-data:/data/hdfs/namenode
       - sshkeys:/home/${USER_NAME}/.ssh
-
+ 
     networks:
       - hadoopnet
 
@@ -45,6 +47,8 @@ services:
     container_name: ${HADOOP_WORKER1_NAME}
     hostname: hadoop-worker1
 
+    entrypoint: /scripts/entrypoint.sh
+    
     depends_on:
       - hadoopmaster
 
