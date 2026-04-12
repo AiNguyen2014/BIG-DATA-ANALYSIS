@@ -1,6 +1,7 @@
 services:
 
   hadoopmaster:
+    platform: linux/amd64
     build:
       context: .
       dockerfile: docker/Dockerfile.hadoop
@@ -10,6 +11,8 @@ services:
 
     container_name: ${HADOOP_MASTER_NAME}
     hostname: hadoop-master
+
+    entrypoint: /scripts/entrypoint.sh
 
     environment:
       USER_NAME: ${USER_NAME}
@@ -31,10 +34,44 @@ services:
       - namenode-data:/data/hdfs/namenode
       - sshkeys:/home/${USER_NAME}/.ssh
 
+  hive-metastore:
+    platform: linux/amd64
+    image: apache/hive:3.1.3
+    container_name: hive-metastore
+    environment:
+      SERVICE_NAME: metastore
+      DB_DRIVER: derby
+    ports:
+      - "9083:9083"
+    networks:
+      - hadoopnet
+
+  spark-thrift:
+    platform: linux/amd64
+    image: apache/spark:3.5.0
+    container_name: spark-thrift
+    depends_on:
+      - hive-metastore
+      - hadoopmaster
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /opt/keys/key.json
+    volumes:
+      - ./config/gcs/credentials/${GCP_KEY_FILE}:/opt/keys/key.json:ro
+    ports:
+      - "10000:10000"
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        /opt/spark/bin/spark-submit \
+        --class org.apache.spark.sql.hive.thriftserver.HiveThriftServer2 \
+        --master local[2] \
+        --conf spark.eventLog.enabled=false \
+        --hiveconf hive.metastore.uris=thrift://hive-metastore:9083
     networks:
       - hadoopnet
 
   hadoopslave1:
+    platform: linux/amd64
     build:
       context: .
       dockerfile: docker/Dockerfile.hadoop
@@ -45,6 +82,8 @@ services:
     container_name: ${HADOOP_WORKER1_NAME}
     hostname: hadoop-worker1
 
+    entrypoint: /scripts/entrypoint.sh
+    
     depends_on:
       - hadoopmaster
 
@@ -67,7 +106,7 @@ services:
 
     networks:
       - hadoopnet
-
+      
   postgres:
     image: postgres:13
     container_name: airflow-postgres
@@ -119,7 +158,16 @@ services:
     networks:
       - hadoopnet
     command: scheduler
-
+  superset:
+    platform: linux/amd64
+    image: apache/superset:latest
+    container_name: superset-new
+    ports:
+      - "8089:8088"
+    environment:
+      - SUPERSET_SECRET_KEY=supersecretkey123
+    networks:
+      - hadoopnet
 networks:
   hadoopnet:
     driver: bridge
