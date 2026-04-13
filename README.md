@@ -84,6 +84,7 @@ Từ tầng Gold:        gold_kpi_path = "gs://bigdata-spark-bucket/gold/kpi_sum
                      gold_monthly_path = "gs://bigdata-spark-bucket/gold/monthly_financials"
                      gold_shipping_path = "gs://bigdata-spark-bucket/gold/shipping_performance"
                      gold_customer_path = "gs://bigdata-spark-bucket/gold/customer_analytics"
+```
 
 # Hướng dẫn — Phần D (Metadata + Visualization)
 ## Khởi động
@@ -110,7 +111,7 @@ docker ps | grep -E "hive-metastore|spark-thrift"
 → Phải thấy cả 2 container ở trạng thái **Up**
 
 **2. Dữ liệu Gold đã được đăng ký vào Hive Metastore**
-# Chạy lần đầu tiên trên máy mới (chỉ cần 1 lần)
+Chạy lần đầu tiên trên máy mới (chỉ cần 1 lần)
 ```bash
 docker exec -it superset-new superset db upgrade
 docker exec -it superset-new superset init
