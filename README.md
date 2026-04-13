@@ -101,7 +101,7 @@ docker compose up -d
 | Hadoop HDFS | http://localhost:9870 | — |
 
 
-## Kiểm tra phần D hoạt động đúng
+## Kiểm tra phần D hoạt động
 **1. Hive Metastore + Spark Thrift Server đang chạy**
 
 ```bash
