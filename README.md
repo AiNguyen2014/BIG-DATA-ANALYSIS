@@ -73,18 +73,6 @@ spark-submit \
 jobs/bronze_to_silver_job.py #thay bằng file pyspark của mình
 
 
-Thành viên B có thể load các file này xử lý tiếp:
-```text
-Dữ liệu	            Đường dẫn trên GCS	                     Mục đích
-Supply Chain Bronze	gs://bigdata-spark-bucket/bronze/dataco/	load về xử lý Silver
-Logs Bronze	         gs://bigdata-spark-bucket/bronze/logs/	   load về xử lý Silver
-
-Dữ liệu
-Từ tầng Gold:        gold_kpi_path = "gs://bigdata-spark-bucket/gold/kpi_summary"
-                     gold_monthly_path = "gs://bigdata-spark-bucket/gold/monthly_financials"
-                     gold_shipping_path = "gs://bigdata-spark-bucket/gold/shipping_performance"
-                     gold_customer_path = "gs://bigdata-spark-bucket/gold/customer_analytics"
-
 # Hướng dẫn — Phần D (Metadata + Visualization)
 ## Khởi động
 
