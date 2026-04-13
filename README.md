@@ -86,61 +86,114 @@ Từ tầng Gold:        gold_kpi_path = "gs://bigdata-spark-bucket/gold/kpi_sum
                      gold_customer_path = "gs://bigdata-spark-bucket/gold/customer_analytics"
 ```
 
-# Hướng dẫn — Phần D (Metadata + Visualization)
-## Khởi động
+7. Khởi chạy Hive Metastore và Spark Thrift Server
+   docker-compose up -d hive-metastore spark-thrift
 
-```bash
-git pull
-docker compose up -d
-```
-## Truy cập các service
+   Kiểm tra đang chạy:
+   docker ps | grep -E "hive-metastore|spark-thrift"
+   → Phải thấy cả 2 container ở trạng thái Up
 
-| Service | URL | Tài khoản |
-|---------|-----|-----------|
-| Superset Dashboard | http://localhost:8089 | admin / admin123 |
-| Airflow UI | http://localhost:8081 | admin / admin |
-| Hadoop HDFS | http://localhost:9870 | — |
+8. Triển khai Apache Superset (chỉ chạy lần đầu)
 
+   Khởi động container Superset:
+   docker-compose up -d superset
 
-## Kiểm tra phần D hoạt động
-**1. Hive Metastore + Spark Thrift Server đang chạy**
+   Khởi tạo database Superset (BẮT BUỘC - chạy 1 lần trên mỗi máy):
+   docker exec -it superset-new superset db upgrade
+   docker exec -it superset-new superset init
 
-```bash
-docker ps | grep -E "hive-metastore|spark-thrift"
-```
-→ Phải thấy cả 2 container ở trạng thái **Up**
+   Tạo user đăng nhập Superset:
+   docker exec -it superset-new superset fab create-admin \
+     --username admin \
+     --firstname Admin \
+     --lastname User \
+     --email admin@example.com \
+     --password admin123
 
-**2. Dữ liệu Gold đã được đăng ký vào Hive Metastore**
-Chạy lần đầu tiên trên máy mới (chỉ cần 1 lần)
-```bash
-docker exec -it superset-new superset db upgrade
-docker exec -it superset-new superset init
-docker exec -it superset-new superset fab create-admin \
-  --username admin --firstname Admin --lastname User \
-  --email admin@example.com --password admin123
-```
-Vào Superset → **SQL → SQL Lab** → chọn database `gold` → chạy:
+   Truy cập Superset tại: http://localhost:8089
+   Đăng nhập: admin / admin123
 
-```sql
-SHOW TABLES IN gold
-```
-→ Phải thấy đủ 4 bảng: `kpi_summary`, `monthly_financials`, `shipping_performance`, `customer_analytics`
+9. Đăng ký dữ liệu Gold vào Hive Metastore
 
-**3. Dashboard hiển thị đúng**
+   docker exec -it hadoop-master bash -c "
+   spark-sql --master local \
+     --conf spark.hadoop.hive.metastore.uris=thrift://hive-metastore:9083 << 'EOF'
+   CREATE DATABASE IF NOT EXISTS gold;
 
-Vào Superset → **Dashboards** → mở **"Supply Chain Analytics Dashboard"**  
-→ Phải thấy 4 charts hiển thị đầy đủ dữ liệu
+   CREATE EXTERNAL TABLE IF NOT EXISTS gold.kpi_summary
+   USING DELTA LOCATION 'gs://bigdata-spark-bucket/gold/kpi_summary';
 
-**4. DAG Airflow đã được load**
+   CREATE EXTERNAL TABLE IF NOT EXISTS gold.monthly_financials
+   USING DELTA LOCATION 'gs://bigdata-spark-bucket/gold/monthly_financials';
 
-Vào Airflow UI → tìm DAG **superset_dashboard_refresh** (tag `phan-D`)  
-→ `Has import errors: false`, 4 tasks hiển thị đúng trong Graph view
+   CREATE EXTERNAL TABLE IF NOT EXISTS gold.shipping_performance
+   USING DELTA LOCATION 'gs://bigdata-spark-bucket/gold/shipping_performance';
 
-## Checklist nhanh
+   CREATE EXTERNAL TABLE IF NOT EXISTS gold.customer_analytics
+   USING DELTA LOCATION 'gs://bigdata-spark-bucket/gold/customer_analytics';
+   EOF
+   "
 
-```
-[ ] docker ps: hive-metastore và spark-thrift đang Up
-[ ] SHOW TABLES IN gold: thấy đủ 4 bảng
+   Xác minh đăng ký thành công:
+   Vào Superset → SQL → SQL Lab → chọn database gold → chạy:
+   SHOW TABLES IN gold
+   → Phải thấy đủ 4 bảng: kpi_summary, monthly_financials, shipping_performance, customer_analytics
+
+10. Kết nối Superset với Spark Thrift Server
+
+    Cài driver pyhive vào Superset:
+    docker exec -u root superset-new /app/.venv/bin/python -m ensurepip
+    docker exec -u root superset-new /app/.venv/bin/python -m pip install pyhive thrift thrift-sasl
+
+    Cấu hình GCS connector cho Spark Thrift:
+    docker exec -u root spark-thrift bash -c "mkdir -p /opt/spark/conf && cat > /opt/spark/conf/core-site.xml << EOF
+    <?xml version=\"1.0\"?>
+    <configuration>
+      <property><name>fs.gs.impl</name><value>com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem</value></property>
+      <property><name>google.cloud.auth.service.account.enable</name><value>true</value></property>
+      <property><name>google.cloud.auth.service.account.json.keyfile</name><value>/opt/keys/key.json</value></property>
+    </configuration>
+    EOF"
+
+    docker cp /tmp/gcs.jar spark-thrift:/opt/spark/jars/gcs-connector.jar
+    docker restart spark-thrift
+
+    Thêm kết nối database trong Superset:
+    Vào Settings → Database Connections → + Database → Other
+    Nhập SQLAlchemy URI: hive://spark-thrift:10000/gold
+    Bấm Test Connection → phải thấy "Connection looks good!" → Save
+
+11. Kiểm tra Dashboard
+
+    Vào Superset → Dashboards → mở "Supply Chain Analytics Dashboard"
+    → Phải thấy 4 charts hiển thị đầy đủ dữ liệu:
+      - Total Sales by Market & Category (Bar Chart)
+      - Monthly Revenue by Market (Line Chart)
+      - Shipments by Region & Mode (Bar Chart)
+      - Customer Segment Distribution (Pie Chart)
+
+12. Kiểm tra DAG Airflow tự động refresh
+
+    Vào Airflow UI tại http://localhost:8081
+    Tìm DAG tên: superset_dashboard_refresh (tag: phan-D)
+    → Tab Details: Has import errors = false, Total Tasks = 4
+    → Tab Graph: wait_for_bronze_silver_gold → check_superset_health → refresh_gold_datasets → warmup_dashboard_cache
+
+Checklist kiểm tra toàn bộ hệ thống
+
+[ ] docker ps: tất cả container Up (hadoop-master, hadoop-worker1, airflow-web, airflow-scheduler, hive-metastore, spark-thrift, superset-new)
+[ ] http://localhost:9870 — Hadoop HDFS UI: NameNode active
+[ ] http://localhost:8088 — YARN UI: 1 Active Node
+[ ] http://localhost:8081 — Airflow UI: đăng nhập được, thấy các DAGs của nhóm
+[ ] http://localhost:8089 — Superset UI: đăng nhập được (admin / admin123)
+[ ] SQL Lab: SHOW TABLES IN gold → thấy đủ 4 bảng
 [ ] Dashboard "Supply Chain Analytics Dashboard": Published, 4 charts có data
 [ ] DAG superset_dashboard_refresh: import errors = false, 4 tasks đúng flow
-```
+
+---
+
+Lưu ý cho thành viên
+
+- Bước 8 (tạo database Superset) BẮT BUỘC chạy thủ công lần đầu trên mỗi máy, không tự động khi docker compose up
+- Mac M1/M2/M3: docker-compose.yml có các dòng platform: linux/amd64. Nếu dùng Intel/Linux thì xóa các dòng đó trước khi chạy
+- Nếu spark-thrift bị exit sau khi start: kiểm tra file core-site.xml và gcs-connector.jar đã được copy đúng chưa
