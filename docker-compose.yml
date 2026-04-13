@@ -1,7 +1,6 @@
 services:
 
   hadoopmaster:
-    platform: linux/amd64
     build:
       context: .
       dockerfile: docker/Dockerfile.hadoop
@@ -35,7 +34,6 @@ services:
       - sshkeys:/home/${USER_NAME}/.ssh
 
   hive-metastore:
-    platform: linux/amd64
     image: apache/hive:3.1.3
     container_name: hive-metastore
     environment:
@@ -47,7 +45,6 @@ services:
       - hadoopnet
 
   spark-thrift:
-    platform: linux/amd64
     image: apache/spark:3.5.0
     container_name: spark-thrift
     depends_on:
@@ -71,7 +68,6 @@ services:
       - hadoopnet
 
   hadoopslave1:
-    platform: linux/amd64
     build:
       context: .
       dockerfile: docker/Dockerfile.hadoop
@@ -159,7 +155,6 @@ services:
       - hadoopnet
     command: scheduler
   superset:
-    platform: linux/amd64
     image: apache/superset:latest
     container_name: superset-new
     ports:
