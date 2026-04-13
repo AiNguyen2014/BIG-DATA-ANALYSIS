@@ -111,11 +111,13 @@ docker ps | grep -E "hive-metastore|spark-thrift"
 
 **2. Dữ liệu Gold đã được đăng ký vào Hive Metastore**
 # Chạy lần đầu tiên trên máy mới (chỉ cần 1 lần)
+```bash
 docker exec -it superset-new superset db upgrade
 docker exec -it superset-new superset init
 docker exec -it superset-new superset fab create-admin \
   --username admin --firstname Admin --lastname User \
   --email admin@example.com --password admin123
+```
 Vào Superset → **SQL → SQL Lab** → chọn database `gold` → chạy:
 
 ```sql
