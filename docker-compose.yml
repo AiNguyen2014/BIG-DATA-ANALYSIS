@@ -33,6 +33,9 @@ services:
       - namenode-data:/data/hdfs/namenode
       - sshkeys:/home/${USER_NAME}/.ssh
 
+    networks:
+      - hadoopnet
+
   hive-metastore:
     image: apache/hive:3.1.3
     container_name: hive-metastore
