@@ -129,6 +129,8 @@ services:
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - USER_NAME=${USER_NAME}
+      - HADOOP_MASTER_NAME=${HADOOP_MASTER_NAME}
     volumes:
       - ./jobs:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
@@ -150,6 +152,8 @@ services:
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - USER_NAME=${USER_NAME}
+      - HADOOP_MASTER_NAME=${HADOOP_MASTER_NAME}
     volumes:
       - ./jobs:/opt/airflow/dags
       - ./logs:/opt/airflow/logs

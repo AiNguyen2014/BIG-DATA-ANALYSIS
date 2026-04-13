@@ -1,7 +1,6 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, trim, lower, when, to_timestamp, regexp_replace
 
-# SPARK SESSION + DELTA
 spark = SparkSession.builder \
     .appName("Silver-Layer-Final-Clean") \
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
