@@ -85,7 +85,7 @@ Từ tầng Gold:        gold_kpi_path = "gs://bigdata-spark-bucket/gold/kpi_sum
                      gold_shipping_path = "gs://bigdata-spark-bucket/gold/shipping_performance"
                      gold_customer_path = "gs://bigdata-spark-bucket/gold/customer_analytics"
 ```
-## 7. Khởi chạy Hive Metastore và Spark Thrift Server
+7. Khởi chạy Hive Metastore và Spark Thrift Server
 
 ```bash
 docker-compose up -d hive-metastore spark-thrift
@@ -99,7 +99,7 @@ docker ps | grep -E "hive-metastore|spark-thrift"
 
 → Phải thấy cả 2 container ở trạng thái **Up**
 
-## 8. Triển khai Apache Superset
+8. Triển khai Apache Superset
 
 > **Bước này BẮT BUỘC chạy thủ công 1 lần trên mỗi máy**, không tự động khi `docker compose up`.
 
@@ -129,7 +129,7 @@ docker exec -it superset-new superset fab create-admin \
 
 Truy cập Superset tại **http://localhost:8089** · Đăng nhập: `admin / admin123`
 
-## 9. Đăng ký dữ liệu Gold vào Hive Metastore
+9. Đăng ký dữ liệu Gold vào Hive Metastore
 
 ```bash
 docker exec -it hadoop-master bash
@@ -168,7 +168,7 @@ SHOW TABLES IN gold
 
 → Phải thấy đủ 4 bảng: `kpi_summary`, `monthly_financials`, `shipping_performance`, `customer_analytics`
 
-## 10. Kết nối Superset với Spark Thrift Server
+10. Kết nối Superset với Spark Thrift Server
 
 Cài driver pyhive vào Superset:
 ```bash
@@ -199,7 +199,7 @@ hive://spark-thrift:10000/gold
 ```
 - Bấm **Test Connection** → phải thấy "Connection looks good!" → **Save**
 
-## 11. Kiểm tra Dashboard
+11. Kiểm tra Dashboard
 
 Vào Superset → **Dashboards** → mở **"Supply Chain Analytics Dashboard"**
 
@@ -212,7 +212,7 @@ Vào Superset → **Dashboards** → mở **"Supply Chain Analytics Dashboard"**
 | Shipments by Region & Mode | shipping_performance | Bar Chart |
 | Customer Segment Distribution | customer_analytics | Pie Chart |
 
-## 12. Kiểm tra DAG Airflow tự động refresh
+12. Kiểm tra DAG Airflow tự động refresh
 
 Vào Airflow UI tại **http://localhost:8081** → tìm DAG tên `superset_dashboard_refresh` (tag: `phan-D`)
 
