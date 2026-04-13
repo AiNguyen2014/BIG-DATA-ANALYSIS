@@ -84,3 +84,55 @@ Từ tầng Gold:        gold_kpi_path = "gs://bigdata-spark-bucket/gold/kpi_sum
                      gold_monthly_path = "gs://bigdata-spark-bucket/gold/monthly_financials"
                      gold_shipping_path = "gs://bigdata-spark-bucket/gold/shipping_performance"
                      gold_customer_path = "gs://bigdata-spark-bucket/gold/customer_analytics"
+
+# Hướng dẫn — Phần D (Metadata + Visualization)
+## Khởi động
+
+```bash
+git pull
+docker compose up -d
+```
+## Truy cập các service
+
+| Service | URL | Tài khoản |
+|---------|-----|-----------|
+| Superset Dashboard | http://localhost:8089 | admin / admin123 |
+| Airflow UI | http://localhost:8081 | admin / admin |
+| Hadoop HDFS | http://localhost:9870 | — |
+
+
+## Kiểm tra phần D hoạt động đúng
+**1. Hive Metastore + Spark Thrift Server đang chạy**
+
+```bash
+docker ps | grep -E "hive-metastore|spark-thrift"
+```
+→ Phải thấy cả 2 container ở trạng thái **Up**
+
+**2. Dữ liệu Gold đã được đăng ký vào Hive Metastore**
+
+Vào Superset → **SQL → SQL Lab** → chọn database `gold` → chạy:
+
+```sql
+SHOW TABLES IN gold
+```
+→ Phải thấy đủ 4 bảng: `kpi_summary`, `monthly_financials`, `shipping_performance`, `customer_analytics`
+
+**3. Dashboard hiển thị đúng**
+
+Vào Superset → **Dashboards** → mở **"Supply Chain Analytics Dashboard"**  
+→ Phải thấy 4 charts hiển thị đầy đủ dữ liệu
+
+**4. DAG Airflow đã được load**
+
+Vào Airflow UI → tìm DAG **superset_dashboard_refresh** (tag `phan-D`)  
+→ `Has import errors: false`, 4 tasks hiển thị đúng trong Graph view
+
+## Checklist nhanh
+
+```
+[ ] docker ps: hive-metastore và spark-thrift đang Up
+[ ] SHOW TABLES IN gold: thấy đủ 4 bảng
+[ ] Dashboard "Supply Chain Analytics Dashboard": Published, 4 charts có data
+[ ] DAG superset_dashboard_refresh: import errors = false, 4 tasks đúng flow
+```
