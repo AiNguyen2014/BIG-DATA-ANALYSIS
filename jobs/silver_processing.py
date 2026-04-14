@@ -2,11 +2,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, trim, lower, when, to_timestamp, regexp_replace
 
 # SPARK SESSION + DELTA
-spark = SparkSession.builder \
-    .appName("Silver-Layer-Final-Clean") \
-    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
-    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
-    .getOrCreate()
+spark = SparkSession.builder.appName("Silver-Layer-Final-Clean").getOrCreate()
 
 # DATASET 1: DATACO
 df = spark.read.format("delta").load("gs://bigdata-spark-bucket/bronze/dataco/")
