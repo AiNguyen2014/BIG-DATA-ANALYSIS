@@ -42,6 +42,7 @@ services:
     environment:
       SERVICE_NAME: metastore
       DB_DRIVER: derby
+      SKIP_SCHEMA_INIT: "true"
     ports:
       - "9083:9083"
     networks:
