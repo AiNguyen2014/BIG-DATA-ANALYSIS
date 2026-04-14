@@ -33,7 +33,8 @@ services:
       - ./jobs:/home/${USER_NAME}/jobs
       - namenode-data:/data/hdfs/namenode
       - sshkeys:/home/${USER_NAME}/.ssh
-
+    networks:
+      - hadoopnet
   hive-metastore:
     platform: linux/amd64
     image: apache/hive:3.1.3
