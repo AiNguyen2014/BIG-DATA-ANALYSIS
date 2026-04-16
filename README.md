@@ -25,7 +25,10 @@ HADOOP_CLUSTER/
 │   └── Dockerfile.spark
 ├── jobs/
 │   |── bronze_to_silver_job.py
+|___|__bronze_silver_gold_dag.py
+|___|__silver_processing.py
 |___|__silver_to_gold_job.py
+|___|__superset_dashboard_refresh_dag.py
 |
 ├── packages/
 │   ├── gcs-connector-hadoop3-latest.jar
@@ -36,6 +39,8 @@ HADOOP_CLUSTER/
 │   ├── entrypoint.sh
 │   ├── start-master.sh
 │   └── start-worker.sh
+├── sql_query/
+|   |__ analysis_query.sql
 ├── logs 
 ├── .env
 ├── .env.example
@@ -49,7 +54,7 @@ HADOOP_CLUSTER/
 3. Bỏ file key GCP vào config/gcs/credentials/
 4. Tạo thư mục packages chứa các file nén hadoop, spark, ...Tạo thêm thư mục rỗng là logs
 5. Chạy:
-   docker-compose build
+   docker-compose build  (chạy 1 lần duy nhất)
 - Khởi tạo database Airflow (BẮT BUỘC)
 docker-compose run airflow-webserver airflow db init
 - Tạo user đăng nhập Airflow
@@ -72,43 +77,19 @@ spark-submit \
 --deploy-mode cluster \
 jobs/bronze_to_silver_job.py #thay bằng file pyspark của mình
 
-
-Thành viên B có thể load các file này xử lý tiếp:
-```text
-Dữ liệu	            Đường dẫn trên GCS	                     Mục đích
-Supply Chain Bronze	gs://bigdata-spark-bucket/bronze/dataco/	load về xử lý Silver
-Logs Bronze	         gs://bigdata-spark-bucket/bronze/logs/	   load về xử lý Silver
-
-Dữ liệu
-Từ tầng Gold:        gold_kpi_path = "gs://bigdata-spark-bucket/gold/kpi_summary"
-                     gold_monthly_path = "gs://bigdata-spark-bucket/gold/monthly_financials"
-                     gold_shipping_path = "gs://bigdata-spark-bucket/gold/shipping_performance"
-                     gold_customer_path = "gs://bigdata-spark-bucket/gold/customer_analytics"
-
-# Hướng dẫn — Phần D (Metadata + Visualization)
-## Khởi động
+7. Khởi động
 
 ```bash
 docker-compose up -d hive-metastore spark-thrift
 ```
 
-Kiểm tra đang chạy:
-
+Chạy thủ công Spark Thrift Server
 ```bash
-docker ps | grep -E "hive-metastore|spark-thrift"
+docker exec -d hadoop-master bash -c "export GOOGLE_APPLICATION_CREDENTIALS=/opt/keys/key.json && /opt/spark/bin/spark-submit --class org.apache.spark.sql.hive.thriftserver.HiveThriftServer2 --master local[2] --conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension --conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog --conf spark.eventLog.enabled=false --hiveconf hive.metastore.uris=thrift://hive-metastore:9083 > /tmp/thrift.log 2>&1"
 ```
-
-→ Phải thấy cả 2 container ở trạng thái **Up**
-
 8. Triển khai Apache Superset
 
 > **Bước này BẮT BUỘC chạy thủ công 1 lần trên mỗi máy**, không tự động khi `docker compose up`.
-
-Khởi động container Superset:
-
-```bash
-docker-compose up -d superset
-```
 
 Khởi tạo database Superset:
 
@@ -131,7 +112,7 @@ Truy cập Superset tại **http://localhost:8089** · Đăng nhập: `admin / a
 docker exec -it hadoop-master bash
 ```
 
-Trong container, chạy spark-sql:
+Trong container hadoop-master, chạy spark-sql:
 
 ```bash
 spark-sql --master local --conf spark.hadoop.hive.metastore.uris=thrift://hive-metastore:9083
@@ -223,6 +204,18 @@ Vào Airflow UI tại **http://localhost:8081** → tìm DAG tên `superset_dash
 | Hadoop HDFS | http://localhost:9870 | — |
 | YARN | http://localhost:8088 | — |
 
+
+```text
+Dữ liệu	              Đường dẫn trên GCS	                                      Mục đích
+Supply Chain Bronze	  gs://bigdata-spark-bucket/bronze/dataco/	                load về xử lý Silver
+Logs Bronze	          gs://bigdata-spark-bucket/bronze/logs/	                  
+Silver                gs://bigdata-spark-bucket/silver/dataco/                  load về xử lý gold
+                      gs://bigdata-spark-bucket/silver/logs/
+Gold                  gs://bigdata-spark-bucket/gold/kpi_summary                lưu dữ liệu kpi_summary
+                      gs://bigdata-spark-bucket/gold/monthly_financials         lưu dữ liệu monthly_financials
+                      gs://bigdata-spark-bucket/gold/shipping_performance       lưu dữ liệu shipping_performance
+                      gs://bigdata-spark-bucket/gold/customer_analytics         lưu dữ liệu customer_analytics
+```
 Checklist kiểm tra toàn bộ hệ thống
 
 ```
@@ -237,7 +230,7 @@ Checklist kiểm tra toàn bộ hệ thống
 [ ] Dashboard "Supply Chain Analytics Dashboard": Published, 4 charts có data
 [ ] DAG superset_dashboard_refresh: import errors = false, 4 tasks đúng flow
 ```
-## Lưu ý cho thành viên
+## Lưu ý
 
 - Bước 8 (khởi tạo database Superset) BẮT BUỘC chạy thủ công lần đầu trên mỗi máy — không tự động khi `docker compose up`
 - Mac M1/M2/M3: `docker-compose.yml` có các dòng `platform: linux/amd64`. Nếu dùng Intel/Linux thì xóa các dòng đó trước khi chạy
