@@ -58,7 +58,7 @@ HADOOP_CLUSTER/
 - Khởi tạo database Airflow (BẮT BUỘC)
 docker-compose run airflow-webserver airflow db init
 - Tạo user đăng nhập Airflow
-docker-compose run airflow-webserver airflow users create --username admin --password admin --firstname admin --lastname admin --role Admin --email admin@email.com
+
 - CHẠY toàn bộ hệ thống
 docker-compose up -d
 
@@ -104,8 +104,7 @@ Tạo user đăng nhập:
 docker exec -it superset-new superset fab create-admin --username admin --firstname Admin --lastname User --email admin@example.com --password admin123
 ```
 
-Truy cập Superset tại **http://localhost:8089** · Đăng nhập: `admin / admin123`
-
+Truy cập Superset tại **http://localhost:8089** · 
 9. Đăng ký dữ liệu Gold vào Hive Metastore
 
 ```bash
@@ -199,8 +198,8 @@ Vào Airflow UI tại **http://localhost:8081** → tìm DAG tên `superset_dash
 
 | Service | URL | Tài khoản |
 |---------|-----|-----------|
-| Superset | http://localhost:8089 | admin / admin123 |
-| Airflow | http://localhost:8081 | admin / admin |
+| Superset | http://localhost:8089 | /  |
+| Airflow | http://localhost:8081 |  / |
 | Hadoop HDFS | http://localhost:9870 | — |
 | YARN | http://localhost:8088 | — |
 
